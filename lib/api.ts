@@ -145,23 +145,23 @@ class ApiClient {
 
   async listProjects(skip = 0, limit = 20): Promise<ProjectListResponse> {
     return this.request<ProjectListResponse>(
-      `/api/construction/boq/projects?skip=${skip}&limit=${limit}`,
+      `/api/projects?skip=${skip}&limit=${limit}`,
     );
   }
 
   async createProject(name: string, description?: string): Promise<BOQProject> {
-    return this.request<BOQProject>('/api/construction/boq/projects', {
+    return this.request<BOQProject>('/api/projects', {
       method: 'POST',
       body: JSON.stringify({ name, description }),
     });
   }
 
   async getProject(id: string): Promise<BOQProject> {
-    return this.request<BOQProject>(`/api/construction/boq/projects/${id}`);
+    return this.request<BOQProject>(`/api/projects/${id}`);
   }
 
   async deleteProject(id: string): Promise<void> {
-    return this.request<void>(`/api/construction/boq/projects/${id}`, { method: 'DELETE' });
+    return this.request<void>(`/api/projects/${id}`, { method: 'DELETE' });
   }
 
   // ─── BOQ ─────────────────────────────────────────────────────────────────
@@ -169,14 +169,14 @@ class ApiClient {
   async uploadDrawing(projectId: string, file: File): Promise<void> {
     const form = new FormData();
     form.append('file', file);
-    await this.request<void>(`/api/construction/boq/projects/${projectId}/upload`, {
+    await this.request<void>(`/api/projects/${projectId}/upload`, {
       method: 'POST',
       body: form,
     });
   }
 
   async getBOQ(projectId: string): Promise<BOQResponse> {
-    return this.request<BOQResponse>(`/api/construction/boq/projects/${projectId}/boq`);
+    return this.request<BOQResponse>(`/api/projects/${projectId}/boq`);
   }
 
   async updateBOQItem(
@@ -185,13 +185,13 @@ class ApiClient {
     updates: Partial<Pick<BOQItem, 'description' | 'unit' | 'quantity' | 'unit_rate' | 'section'>>,
   ): Promise<BOQItem> {
     return this.request<BOQItem>(
-      `/api/construction/boq/projects/${projectId}/boq/items/${itemId}`,
+      `/api/projects/${projectId}/boq/items/${itemId}`,
       { method: 'PATCH', body: JSON.stringify(updates) },
     );
   }
 
   getExportUrl(projectId: string): string {
-    return `${API_URL}/api/construction/boq/projects/${projectId}/boq/export/xlsx`;
+    return `${API_URL}/api/projects/${projectId}/boq/export/xlsx`;
   }
 }
 
