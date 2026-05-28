@@ -105,7 +105,6 @@ export default function BOQPage() {
           await loadBOQ(proj.id);
           setSuccess('BOQ extraction complete!');
           setTimeout(() => setSuccess(null), 4000);
-          // Show road dimensions modal for civil projects
           if (proj.project_type === 'civil') setShowRoadModal(true);
         } else if (proj.status === 'failed') {
           clearInterval(pollRef.current!);
@@ -241,7 +240,11 @@ export default function BOQPage() {
       failed: { bg: '#fee2e2', color: '#991b1b', label: 'Failed' },
     };
     const s = map[status];
-    return <span style={{ background: s.bg, color: s.color, padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{s.label}</span>;
+    return (
+      <span style={{ background: s.bg, color: s.color, padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+        {s.label}
+      </span>
+    );
   };
 
   const grouped = boqData?.items.reduce<Record<string, BOQItem[]>>((acc, item) => {
@@ -356,7 +359,11 @@ export default function BOQPage() {
 
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
               <button className="btn btn-ghost" onClick={() => setShowRoadModal(false)}>Skip for now</button>
-              <button className="btn btn-primary" onClick={handleRoadDimensions} disabled={roadLoading || !roadDims.road_length_m || !roadDims.carriageway_width_m}>
+              <button
+                className="btn btn-primary"
+                onClick={handleRoadDimensions}
+                disabled={roadLoading || !roadDims.road_length_m || !roadDims.carriageway_width_m}
+              >
                 {roadLoading ? '⟳ Calculating…' : '⚡ Recalculate Quantities'}
               </button>
             </div>
@@ -381,12 +388,18 @@ export default function BOQPage() {
           </div>
 
           <nav style={{ flex: 1, padding: 12, overflow: 'auto' }}>
-            <button className="btn" onClick={() => { setView('dashboard'); setSelectedProject(null); setBOQData(null); }}
-              style={{ width: '100%', textAlign: 'left', padding: '8px 12px', borderRadius: 6, background: view === 'dashboard' ? '#1e293b' : 'transparent', color: view === 'dashboard' ? '#f8fafc' : '#64748b', fontSize: 13, marginBottom: 4, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button
+              className="btn"
+              onClick={() => { setView('dashboard'); setSelectedProject(null); setBOQData(null); }}
+              style={{ width: '100%', textAlign: 'left', padding: '8px 12px', borderRadius: 6, background: view === 'dashboard' ? '#1e293b' : 'transparent', color: view === 'dashboard' ? '#f8fafc' : '#64748b', fontSize: 13, marginBottom: 4, display: 'flex', alignItems: 'center', gap: 8 }}
+            >
               <span>⊞</span> All Projects
             </button>
-            <button className="btn" onClick={() => { setView('new'); setError(null); }}
-              style={{ width: '100%', textAlign: 'left', padding: '8px 12px', borderRadius: 6, background: view === 'new' ? '#1e293b' : 'transparent', color: view === 'new' ? '#f59e0b' : '#64748b', fontSize: 13, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button
+              className="btn"
+              onClick={() => { setView('new'); setError(null); }}
+              style={{ width: '100%', textAlign: 'left', padding: '8px 12px', borderRadius: 6, background: view === 'new' ? '#1e293b' : 'transparent', color: view === 'new' ? '#f59e0b' : '#64748b', fontSize: 13, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}
+            >
               <span>＋</span> New Project
             </button>
 
@@ -394,8 +407,12 @@ export default function BOQPage() {
               <>
                 <div style={{ fontSize: 10, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.1em', padding: '4px 12px 6px', fontWeight: 700 }}>Recent</div>
                 {projects.slice(0, 8).map(p => (
-                  <button key={p.id} className="btn" onClick={() => openProject(p)}
-                    style={{ width: '100%', textAlign: 'left', padding: '7px 12px', borderRadius: 6, background: selectedProject?.id === p.id ? '#1e293b' : 'transparent', color: selectedProject?.id === p.id ? '#f8fafc' : '#475569', fontSize: 12, marginBottom: 2, display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <button
+                    key={p.id}
+                    className="btn"
+                    onClick={() => openProject(p)}
+                    style={{ width: '100%', textAlign: 'left', padding: '7px 12px', borderRadius: 6, background: selectedProject?.id === p.id ? '#1e293b' : 'transparent', color: selectedProject?.id === p.id ? '#f8fafc' : '#475569', fontSize: 12, marginBottom: 2, display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                  >
                     <span style={{ fontSize: 8, color: p.status === 'ready' ? '#16a34a' : p.status === 'failed' ? '#ef4444' : '#f59e0b' }}>●</span>
                     <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</span>
                   </button>
@@ -443,10 +460,14 @@ export default function BOQPage() {
               ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
                   {projects.map(p => (
-                    <div key={p.id} className="card" style={{ padding: 20, cursor: 'pointer', transition: 'border-color 0.15s' }}
+                    <div
+                      key={p.id}
+                      className="card"
+                      style={{ padding: 20, cursor: 'pointer', transition: 'border-color 0.15s' }}
                       onClick={() => openProject(p)}
                       onMouseEnter={e => (e.currentTarget.style.borderColor = '#334155')}
-                      onMouseLeave={e => (e.currentTarget.style.borderColor = '#1e293b')}>
+                      onMouseLeave={e => (e.currentTarget.style.borderColor = '#1e293b')}
+                    >
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
                         <div style={{ fontSize: 14, fontWeight: 700, color: '#f8fafc', flex: 1, paddingRight: 8 }}>{p.name}</div>
                         {statusBadge(p.status)}
@@ -463,7 +484,13 @@ export default function BOQPage() {
                         <span style={{ fontSize: 11, color: '#475569', fontFamily: "'DM Mono', monospace" }}>
                           {p.item_count} items · {new Date(p.created_at).toLocaleDateString()}
                         </span>
-                        <button className="btn btn-danger" onClick={e => { e.stopPropagation(); handleDeleteProject(p.id); }} style={{ padding: '3px 8px', fontSize: 11 }}>Delete</button>
+                        <button
+                          className="btn btn-danger"
+                          onClick={e => { e.stopPropagation(); handleDeleteProject(p.id); }}
+                          style={{ padding: '3px 8px', fontSize: 11 }}
+                        >
+                          Delete
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -482,16 +509,24 @@ export default function BOQPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                 <div>
                   <label style={{ display: 'block', fontSize: 12, color: '#94a3b8', marginBottom: 6, fontWeight: 600 }}>Project Name *</label>
-                  <input className="input" placeholder="e.g. Tarisa Road Phase 2 — Drainage" value={newName}
-                    onChange={e => setNewName(e.target.value)} maxLength={255} />
+                  <input
+                    className="input"
+                    placeholder="e.g. Tarisa Road Phase 2 — Drainage"
+                    value={newName}
+                    onChange={e => setNewName(e.target.value)}
+                    maxLength={255}
+                  />
                 </div>
 
                 <div>
                   <label style={{ display: 'block', fontSize: 12, color: '#94a3b8', marginBottom: 8, fontWeight: 600 }}>Project Type *</label>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
                     {PROJECT_TYPES.map(t => (
-                      <div key={t.value} className={`type-card ${newType === t.value ? 'selected' : ''}`}
-                        onClick={() => setNewType(t.value)}>
+                      <div
+                        key={t.value}
+                        className={`type-card ${newType === t.value ? 'selected' : ''}`}
+                        onClick={() => setNewType(t.value)}
+                      >
                         <div style={{ fontSize: 13, fontWeight: 600, color: newType === t.value ? '#f59e0b' : '#e2e8f0', marginBottom: 2 }}>{t.label}</div>
                         <div style={{ fontSize: 11, color: '#475569' }}>{t.desc}</div>
                       </div>
@@ -501,14 +536,25 @@ export default function BOQPage() {
 
                 <div>
                   <label style={{ display: 'block', fontSize: 12, color: '#94a3b8', marginBottom: 6, fontWeight: 600 }}>Description</label>
-                  <textarea className="input" placeholder="Optional notes…" value={newDesc}
-                    onChange={e => setNewDesc(e.target.value)} rows={2} style={{ resize: 'vertical', fontFamily: 'inherit' }} maxLength={2000} />
+                  <textarea
+                    className="input"
+                    placeholder="Optional notes…"
+                    value={newDesc}
+                    onChange={e => setNewDesc(e.target.value)}
+                    rows={2}
+                    style={{ resize: 'vertical', fontFamily: 'inherit' }}
+                    maxLength={2000}
+                  />
                 </div>
 
                 <div>
                   <label style={{ display: 'block', fontSize: 12, color: '#94a3b8', marginBottom: 6, fontWeight: 600 }}>Drawing File * (PDF, PNG, JPG — max 20 MB)</label>
-                  <div onDragOver={e => e.preventDefault()} onDrop={handleDrop} onClick={() => fileInputRef.current?.click()}
-                    style={{ border: `2px dashed ${fileError ? '#ef4444' : selectedFile ? '#f59e0b' : '#334155'}`, borderRadius: 8, padding: '28px 20px', textAlign: 'center', cursor: 'pointer', background: selectedFile ? '#f59e0b0a' : '#1e293b20', transition: 'all 0.2s' }}>
+                  <div
+                    onDragOver={e => e.preventDefault()}
+                    onDrop={handleDrop}
+                    onClick={() => fileInputRef.current?.click()}
+                    style={{ border: `2px dashed ${fileError ? '#ef4444' : selectedFile ? '#f59e0b' : '#334155'}`, borderRadius: 8, padding: '28px 20px', textAlign: 'center', cursor: 'pointer', background: selectedFile ? '#f59e0b0a' : '#1e293b20', transition: 'all 0.2s' }}
+                  >
                     <div style={{ fontSize: 28, marginBottom: 8 }}>{selectedFile ? '📄' : '⬆'}</div>
                     {selectedFile ? (
                       <div>
@@ -533,9 +579,12 @@ export default function BOQPage() {
                   </div>
                 )}
 
-                <button className="btn btn-primary" onClick={handleCreateProject}
+                <button
+                  className="btn btn-primary"
+                  onClick={handleCreateProject}
                   disabled={uploading || !newName.trim() || !selectedFile || !!fileError}
-                  style={{ alignSelf: 'flex-start', minWidth: 180 }}>
+                  style={{ alignSelf: 'flex-start', minWidth: 180 }}
+                >
                   {uploading ? '⟳ Uploading…' : '⚡ Extract BOQ'}
                 </button>
               </div>
@@ -549,7 +598,13 @@ export default function BOQPage() {
               {/* Header */}
               <div style={{ padding: '14px 24px', borderBottom: '1px solid #1e293b', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#0a0d14' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <button className="btn btn-ghost" onClick={() => { setView('dashboard'); setBOQData(null); setSelectedProject(null); }} style={{ padding: '4px 10px', fontSize: 12 }}>←</button>
+                  <button
+                    className="btn btn-ghost"
+                    onClick={() => { setView('dashboard'); setBOQData(null); setSelectedProject(null); }}
+                    style={{ padding: '4px 10px', fontSize: 12 }}
+                  >
+                    ←
+                  </button>
                   <div>
                     <h2 style={{ fontSize: 15, fontWeight: 700, color: '#f8fafc' }}>{selectedProject.name}</h2>
                     <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 2 }}>
@@ -557,7 +612,11 @@ export default function BOQPage() {
                       <span style={{ fontSize: 11, color: '#475569' }}>
                         {PROJECT_TYPES.find(t => t.value === selectedProject.project_type)?.label}
                       </span>
-                      {boqData && <span style={{ fontSize: 11, color: '#475569', fontFamily: "'DM Mono', monospace" }}>{boqData.items.length} items</span>}
+                      {boqData && (
+                        <span style={{ fontSize: 11, color: '#475569', fontFamily: "'DM Mono', monospace" }}>
+                          {boqData.items.length} items
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -626,7 +685,9 @@ export default function BOQPage() {
                         <thead style={{ position: 'sticky', top: 0, zIndex: 10 }}>
                           <tr style={{ background: '#0a0d14', borderBottom: '2px solid #1e293b' }}>
                             {['Item', 'Description', 'Unit', 'Qty', 'Rate (USD)', 'Materials', 'Labour', 'Amount (USD)', 'Conf.'].map(h => (
-                              <th key={h} style={{ padding: '10px 12px', textAlign: h === 'Description' ? 'left' : 'right', color: '#475569', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>{h}</th>
+                              <th key={h} style={{ padding: '10px 12px', textAlign: h === 'Description' ? 'left' : 'right', color: '#475569', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>
+                                {h}
+                              </th>
                             ))}
                           </tr>
                         </thead>
@@ -637,7 +698,9 @@ export default function BOQPage() {
                                 <td colSpan={9} className="section-header">{section}</td>
                               </tr>
                               {(grouped?.[section] ?? []).map(item => (
-                                <EditableRow key={item.id} item={item}
+                                <EditableRow
+                                  key={item.id}
+                                  item={item}
                                   isEditing={editingItem === item.id}
                                   onEdit={() => setEditingItem(item.id)}
                                   onSave={(field, val) => handleItemUpdate(item, field, val)}
@@ -675,7 +738,9 @@ export default function BOQPage() {
                           <thead style={{ position: 'sticky', top: 0, zIndex: 10 }}>
                             <tr style={{ background: '#0a0d14', borderBottom: '2px solid #1e293b' }}>
                               {['Material', 'Category', 'Unit', 'Qty Required', 'Unit Rate', 'Total Cost', 'Supplier Note'].map(h => (
-                                <th key={h} style={{ padding: '10px 12px', textAlign: h === 'Material' || h === 'Category' || h === 'Supplier Note' ? 'left' : 'right', color: '#475569', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>{h}</th>
+                                <th key={h} style={{ padding: '10px 12px', textAlign: h === 'Material' || h === 'Category' || h === 'Supplier Note' ? 'left' : 'right', color: '#475569', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>
+                                  {h}
+                                </th>
                               ))}
                             </tr>
                           </thead>
@@ -721,7 +786,6 @@ export default function BOQPage() {
                         <div style={{ maxWidth: 560 }}>
                           <h2 style={{ fontSize: 18, fontWeight: 800, color: '#f8fafc', marginBottom: 24 }}>Cost Summary</h2>
 
-                          {/* Cost breakdown cards */}
                           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 28 }}>
                             {[
                               { label: 'Materials', value: boqData.cost_summary.total_materials_cost, color: '#3b82f6' },
@@ -735,13 +799,28 @@ export default function BOQPage() {
                             ))}
                           </div>
 
-                          {/* Oncosts table */}
                           <div className="card" style={{ overflow: 'hidden', marginBottom: 20 }}>
                             {[
-                              { label: 'Construction cost subtotal', value: (boqData.cost_summary.total_materials_cost ?? 0) + (boqData.cost_summary.total_labour_cost ?? 0) + (boqData.cost_summary.total_subcontractor_cost ?? 0), bold: false },
-                              { label: `Preliminaries (${boqData.cost_summary.preliminaries_pct ?? 8}%)`, value: ((boqData.cost_summary.total_materials_cost ?? 0) + (boqData.cost_summary.total_labour_cost ?? 0)) * ((boqData.cost_summary.preliminaries_pct ?? 8) / 100), bold: false },
-                              { label: `Contingency (${boqData.cost_summary.contingency_pct ?? 5}%)`, value: ((boqData.cost_summary.total_materials_cost ?? 0) + (boqData.cost_summary.total_labour_cost ?? 0)) * ((boqData.cost_summary.contingency_pct ?? 5) / 100), bold: false },
-                              { label: `Profit & Overhead (${boqData.cost_summary.profit_margin_pct ?? 15}%)`, value: ((boqData.cost_summary.total_materials_cost ?? 0) + (boqData.cost_summary.total_labour_cost ?? 0)) * ((boqData.cost_summary.profit_margin_pct ?? 15) / 100), bold: false },
+                              {
+                                label: 'Construction cost subtotal',
+                                value: (boqData.cost_summary.total_materials_cost ?? 0) + (boqData.cost_summary.total_labour_cost ?? 0) + (boqData.cost_summary.total_subcontractor_cost ?? 0),
+                                bold: false,
+                              },
+                              {
+                                label: `Preliminaries (${boqData.cost_summary.preliminaries_pct ?? 8}%)`,
+                                value: ((boqData.cost_summary.total_materials_cost ?? 0) + (boqData.cost_summary.total_labour_cost ?? 0)) * ((boqData.cost_summary.preliminaries_pct ?? 8) / 100),
+                                bold: false,
+                              },
+                              {
+                                label: `Contingency (${boqData.cost_summary.contingency_pct ?? 5}%)`,
+                                value: ((boqData.cost_summary.total_materials_cost ?? 0) + (boqData.cost_summary.total_labour_cost ?? 0)) * ((boqData.cost_summary.contingency_pct ?? 5) / 100),
+                                bold: false,
+                              },
+                              {
+                                label: `Profit & Overhead (${boqData.cost_summary.profit_margin_pct ?? 15}%)`,
+                                value: ((boqData.cost_summary.total_materials_cost ?? 0) + (boqData.cost_summary.total_labour_cost ?? 0)) * ((boqData.cost_summary.profit_margin_pct ?? 15) / 100),
+                                bold: false,
+                              },
                             ].map((row, i) => (
                               <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 20px', borderBottom: '1px solid #1e293b' }}>
                                 <span style={{ fontSize: 13, color: '#94a3b8' }}>{row.label}</span>
@@ -771,9 +850,18 @@ export default function BOQPage() {
   );
 }
 
-// ─── Editable row ──────────────────────────────────────────────────────────────
-function EditableRow({ item, isEditing, onEdit, onSave, onCancel, formatCurrency, confidenceColor }: {
-  item: BOQItem; isEditing: boolean;
+// ─── Editable Row ──────────────────────────────────────────────────────────────
+function EditableRow({
+  item,
+  isEditing,
+  onEdit,
+  onSave,
+  onCancel,
+  formatCurrency,
+  cfidenceColor,
+}: {
+  item: BOQItem;
+  isEditing: boolean;
   onEdit: () => void;
   onSave: (field: keyof BOQItem, val: string | number) => void;
   onCancel: () => void;
@@ -796,27 +884,53 @@ function EditableRow({ item, isEditing, onEdit, onSave, onCancel, formatCurrency
   };
 
   return (
-    <tr className="row-hover" style={{ borderBottom: '1px solid #1e293b1a', cursor: 'pointer' }} onClick={() => !isEditing && onEdit()}>
+    <tr
+      className="row-hover"
+      style={{ borderBottom: '1px solid #1e293b1a', cursor: 'pointer' }}
+      onClick={() => !isEditing && onEdit()}
+    >
       <td style={{ padding: '9px 12px', color: '#64748b', fontFamily: "'DM Mono', monospace", fontSize: 12, textAlign: 'right', whiteSpace: 'nowrap' }}>
         {item.item_number}
         {item.is_user_edited && <span style={{ color: '#f59e0b', marginLeft: 4, fontSize: 10 }}>✎</span>}
       </td>
       <td style={{ padding: '9px 12px', color: '#cbd5e1', maxWidth: 360 }}>
-        <span style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' } as any}>{item.description}</span>
+        <span style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' } as React.CSSProperties}>
+          {item.description}
+        </span>
       </td>
-      <td style={{ padding: '9px 12px', color: '#94a3b8', textAlign: 'right', fontFamily: "'DM Mono', monospace" }}>{item.unit ?? '—'}</td>
-      <td style={{ padding: '92px', textAlign: 'right' }}>
-        {isEditing ? (
-          <input className="edit-input" style={{ width: 80 }} value={qty} onChange={e => setQty(e.target.value)} onClick={e => e.stopPropagation()} />
-        ) : (
-          <span style={{ fontFamily: "'DM Mono', monospace", color: '#e2e8f0' }}>{item.quantity?.toLocaleString() ?? '—'}</span>
-        )}
+      <td style={{ padding: '9px 12px', color: '#94a3b8', textAlign: 'right'fontFamily: "'DM Mono', monospace" }}>
+        {item.unit ?? '—'}
       </td>
+      {/* FIX: was '92px' — corrected to '9px 12px' */}
       <td style={{ padding: '9px 12px', textAlign: 'right' }}>
         {isEditing ? (
-          <input className="edit-input" style={{ width:0 }} value={rate} onChange={e => setRate(e.target.value)} onClick={e => e.stopPropagation()} />
+          <input
+            className="edit-input"
+            style={{ width: 80 }}
+            value={qty}
+            onChange={e => setQty(e.target.value)}
+            onClick={e => e.stopPropagation()}
+          />
         ) : (
-          <span style={{ fontFamily: "'DM Mono', monospace", color: '#94a3b8' }}>{formatCurrency(item.unit_rate)}</span>
+          <span style={{ fontFamily: "'DM Mono', monoe", color: '#e2e8f0' }}>
+            {item.quantity?.toLocaleString() ?? '—'}
+          </span>
+        )}
+      </td>
+      {/* FIX: width was 0 — corrected to 80 */}
+      <td style={{ padding: '9px 12px', textAlign: 'right' }}>
+        {isEditing ? (
+          <input
+            className="edit-input"
+            style={{ width: 80 }}
+            value={rate}
+            onChange={e => setRate(e.target.value)}
+            onClick={e => e.stopPropagation()}
+          />
+        ) : (
+          <span s={{ fontFamily: "'DM Mono', monospace", color: '#94a3b8' }}>
+            {formatCurrency(item.unit_rate)}
+          </span>
         )}
       </td>
       <td style={{ padding: '9px 12px', textAlign: 'right', fontFamily: "'DM Mono', monospace", fontSize: 12, color: '#3b82f6' }}>
@@ -835,10 +949,12 @@ function EditableRow({ item, isEditing, onEdit, onSave, onCancel, formatCurrency
             <button className="btn btn-ghost" onClick={onCancel} style={{ padding: '3px 8px', fontSize: 12 }}>✕</button>
           </div>
         ) : (
+          /* FIX: was missing closing } before </span> — now properly closed */
           <span style={{ color: confidenceColor(item.confidence), fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 700 }}>
-            {item.confidence ? `${Math.round(item.confidence * 100)}%` : '—'      </span>
-        )}
-      </td>
+            {item.confidence ? `${Math.round(item.confidence * 100)}%` : '—'}
+          </span>
+         </td>
     </tr>
   );
 }
+
