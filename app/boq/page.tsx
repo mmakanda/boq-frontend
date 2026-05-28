@@ -752,3 +752,93 @@ export default function BOQPage() {
                               <span style={{ fontSize: 15, fontWeight: 800, color: '#f8fafc' }}>TOTAL PROJECT COST</span>
                               <span style={{ fontSize: 18, fontFamily: "'DM Mono', monospace", fontWeight: 800, color: '#f59e0b' }}>{fc(boqData.cost_summary.total_project_cost)}</span>
                             </div>
+                          </div>
+
+                          <p style={{ fontSize: 11, color: '#334155', lineHeight: 1.6 }}>
+                            * Rates based on Zimbabwe 2025 market prices. Actual costs may vary based on site conditions, supplier pricing, and market fluctuations. This estimate should be validated by a registered quantity surveyor before use in tender documents.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+        </main>
+      </div>
+    </>
+  );
+}
+
+// ─── Editable row ──────────────────────────────────────────────────────────────
+function EditableRow({ item, isEditing, onEdit, onSave, onCancel, formatCurrency, confidenceColor }: {
+  item: BOQItem; isEditing: boolean;
+  onEdit: () => void;
+  onSave: (field: keyof BOQItem, val: string | number) => void;
+  onCancel: () => void;
+  formatCurrency: (v: number | null | undefined) => string;
+  confidenceColor: (c: number | null) => string;
+}) {
+  const [qty, setQty] = useState(String(item.quantity ?? ''));
+  const [rate, setRate] = useState(String(item.unit_rate ?? ''));
+
+  useEffect(() => {
+    setQty(String(item.quantity ?? ''));
+    setRate(String(item.unit_rate ?? ''));
+  }, [item]);
+
+  const handleSave = () => {
+    const q = parseFloat(qty);
+    const r = parseFloat(rate);
+    if (!isNaN(q)) onSave('quantity', q);
+    if (!isNaN(r)) onSave('unit_rate', r);
+  };
+
+  return (
+    <tr className="row-hover" style={{ borderBottom: '1px solid #1e293b1a', cursor: 'pointer' }} onClick={() => !isEditing && onEdit()}>
+      <td style={{ padding: '9px 12px', color: '#64748b', fontFamily: "'DM Mono', monospace", fontSize: 12, textAlign: 'right', whiteSpace: 'nowrap' }}>
+        {item.item_number}
+        {item.is_user_edited && <span style={{ color: '#f59e0b', marginLeft: 4, fontSize: 10 }}>✎</span>}
+      </td>
+      <td style={{ padding: '9px 12px', color: '#cbd5e1', maxWidth: 360 }}>
+        <span style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' } as any}>{item.description}</span>
+      </td>
+      <td style={{ padding: '9px 12px', color: '#94a3b8', textAlign: 'right', fontFamily: "'DM Mono', monospace" }}>{item.unit ?? '—'}</td>
+      <td style={{ padding: '92px', textAlign: 'right' }}>
+        {isEditing ? (
+          <input className="edit-input" style={{ width: 80 }} value={qty} onChange={e => setQty(e.target.value)} onClick={e => e.stopPropagation()} />
+        ) : (
+          <span style={{ fontFamily: "'DM Mono', monospace", color: '#e2e8f0' }}>{item.quantity?.toLocaleString() ?? '—'}</span>
+        )}
+      </td>
+      <td style={{ padding: '9px 12px', textAlign: 'right' }}>
+        {isEditing ? (
+          <input className="edit-input" style={{ width:0 }} value={rate} onChange={e => setRate(e.target.value)} onClick={e => e.stopPropagation()} />
+        ) : (
+          <span style={{ fontFamily: "'DM Mono', monospace", color: '#94a3b8' }}>{formatCurrency(item.unit_rate)}</span>
+        )}
+      </td>
+      <td style={{ padding: '9px 12px', textAlign: 'right', fontFamily: "'DM Mono', monospace", fontSize: 12, color: '#3b82f6' }}>
+        {formatCurrency(item.materials_cost)}
+      </td>
+      <td style={{ padding: '9px 12px', textAlign: 'right', fontFamily: "'DM Mono', monospace", fontSize: 12, color: '#8b5cf6' }}>
+        {formatCurrency(item.labour_cost)}
+      </td>
+      <td style={{ padding: '9px 12px', textAlign: 'right', fontFamily: "'DM Mono', monospace", fontWeight: 700, color: item.amount ? '#f8fafc' : '#334155' }}>
+        {formatCurrency(item.amount)}
+      </td>
+      <td style={{ padding: '9px 12px', textAlign: 'right' }}>
+        {isEditing ? (
+          <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }} onClick={e => e.stopPropagation()}>
+            <button className="btn btn-primary" onClick={handleSave} style={{ padding: '3px 10px', fontSize: 12 }}>✓</button>
+            <button className="btn btn-ghost" onClick={onCancel} style={{ padding: '3px 8px', fontSize: 12 }}>✕</button>
+          </div>
+        ) : (
+          <span style={{ color: confidenceColor(item.confidence), fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 700 }}>
+            {item.confidence ? `${Math.round(item.confidence * 100)}%` : '—'      </span>
+        )}
+      </td>
+    </tr>
+  );
+}
