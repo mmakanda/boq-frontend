@@ -629,7 +629,7 @@ export default function BOQPage() {
                   {selectedProject.project_type === 'civil' && selectedProject.status === 'ready' && (
                     <button className="btn btn-ghost" onClick={() => setShowRoadModal(true)} style={{ fontSize: 12 }}>🛣 Road Dims</button>
                   )}
-                  {selectedPrect.status === 'ready' && (
+                  {selectedProject.status === 'ready' && (
                     <button className="btn btn-primary" onClick={handleExport} disabled={exporting} style={{ fontSize: 13 }}>
                       {exporting ? '⟳ Exporting…' : '↓ Export XLSX'}
                     </button>
@@ -639,11 +639,11 @@ export default function BOQPage() {
 
               {/* Processing */}
               {(processing || selectedProject.status === 'processing') && (
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'columngnItems: 'center', justifyContent: 'center', gap: 16 }}>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
                   <div style={{ width: 56, height: 56, border: '3px solid #1e293b', borderTopColor: '#f59e0b', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
                   <div style={{ textAlign: 'center' }}>
                     <p style={{ color: '#f8fafc', fontSize: 15, fontWeight: 600 }}>Analysing drawing…</p>
-                    <p style={{ color: '#475569', fontSize: 13, marginTop: 4 }}>Extracting quantities, applying Ziabwe rates and generating material schedule. 30–90 seconds.</p>
+                    <p style={{ color: '#475569', fontSize: 13, marginTop: 4 }}>Extracting quantities, applying Zimbabwe rates and generating material schedule. 30–90 seconds.</p>
                   </div>
                 </div>
               )}
@@ -652,7 +652,7 @@ export default function BOQPage() {
               {selectedProject.status === 'failed' && (
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
                   <div style={{ fontSize: 48 }}>⚠</div>
-                  <p style={{ color: '#fca5a5', fontSize: 15, fontWeight: 600 }}>Extraction failp>
+                  <p style={{ color: '#fca5a5', fontSize: 15, fontWeight: 600 }}>Extraction failed</p>
                   <p style={{ color: '#64748b', fontSize: 13, maxWidth: 400, textAlign: 'center' }}>{selectedProject.error_message}</p>
                 </div>
               )}
@@ -718,7 +718,7 @@ export default function BOQPage() {
                         </div>
                       ) : (
                         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-                          <thead style={{ posion: 'sticky', top: 0, zIndex: 10 }}>
+                          <thead style={{ position: 'sticky', top: 0, zIndex: 10 }}>
                             <tr style={{ background: '#0a0d14', borderBottom: '2px solid #1e293b' }}>
                               {['Material', 'Category', 'Unit', 'Qty Required', 'Unit Rate', 'Total Cost', 'Supplier Note'].map(h => (
                                 <th key={h} style={{ padding: '10px 12px', textAlign: h === 'Material' || h === 'Category' || h === 'Supplier Note' ? 'left' : 'right', color: '#475569', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>
@@ -734,17 +734,17 @@ export default function BOQPage() {
                                 <td style={{ padding: '9px 12px', color: '#64748b', fontSize: 12 }}>
                                   <span style={{ background: '#1e293b', padding: '2px 8px', borderRadius: 4 }}>{mat.category || '—'}</span>
                                 </td>
-                                <td style={{ padding: '9px 12px', color: '#94a3b8', textAlign: 'right', fontFamily: "'DM Mono', monospace" }}>{mat.un}</td>
+                                <td style={{ padding: '9px 12px', color: '#94a3b8', textAlign: 'right', fontFamily: "'DM Mono', monospace" }}>{mat.unit}</td>
                                 <td style={{ padding: '9px 12px', textAlign: 'right', fontFamily: "'DM Mono', monospace", color: '#e2e8f0' }}>{mat.quantity_required?.toLocaleString() ?? '—'}</td>
                                 <td style={{ padding: '9px 12px', textAlign: 'right', fontFamily: "'DM Mono', monospace", color: '#94a3b8' }}>{fc(mat.unit_rate)}</td>
-                                <td style={{ padding: '9px 12px', textAlign: 'right', fontFamily: "'DM Mono', monospace", fontWeight: 700, cor: '#f8fafc' }}>{fc(mat.total_cost)}</td>
+                                <td style={{ padding: '9px 12px', textAlign: 'right', fontFamily: "'DM Mono', monospace", fontWeight: 700, color: '#f8fafc' }}>{fc(mat.total_cost)}</td>
                                 <td style={{ padding: '9px 12px', color: '#64748b', fontSize: 11, maxWidth: 220 }}>{mat.supplier_note || '—'}</td>
                               </tr>
                             ))}
                           </tbody>
                           <tfoot>
                             <tr style={{ background: '#0a0d14', borderTop: '2px solid #1e293b' }}>
-                              <td colSpan={5} style={{ padding: '12px 16px', textAli: 'right', color: '#64748b', fontSize: 12, fontWeight: 700, textTransform: 'uppercase' }}>Total Materials</td>
+                              <td colSpan={5} style={{ padding: '12px 16px', textAlign: 'right', color: '#64748b', fontSize: 12, fontWeight: 700, textTransform: 'uppercase' }}>Total Materials</td>
                               <td style={{ padding: '12px 16px', textAlign: 'right', fontFamily: "'DM Mono', monospace", fontWeight: 800, color: '#f59e0b', fontSize: 15 }}>
                                 {fc(boqData.material_schedule.reduce((s, m) => s + (m.total_cost ?? 0), 0))}
                               </td>
@@ -811,4 +811,3 @@ export default function BOQPage() {
     </>
   );
 }
-
