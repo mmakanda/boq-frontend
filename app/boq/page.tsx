@@ -403,9 +403,9 @@ export default function BOQPage() {
             </div>
             <div style={{ background: '#1e293b', borderRadius: 6, padding: '10px 14px', marginBottom: 20, fontSize: 12, color: '#64748b', lineHeight: 1.7 }}>
               <strong style={{ color: '#94a3b8' }}>Preview:</strong><br />
-              Carriageway area: {(roadDims.road_length_m * roadDims.carriageway_width_m).toFixed(1)} m²<br />
-              Formation width: {(roadDims.carriageway_width_m + 2 * roadDims.shoulder_width_m).toFixed(1)} m<br />
-              Sub-base vol (200mm): {(roadDims.road_length_m * (roadDims.carriageway_width_m + 2 * roadDims.shoulder_width_m) * 0.2).toFixed(1)} m³
+              Carriageway area: {((roadDims.road_length_m ?? 0) * (roadDims.carriageway_width_m ?? 0)).toFixed(1)} m²<br />
+              Formation width: {((roadDims.carriageway_width_m ?? 0) + 2 * (roadDims.shoulder_width_m ?? 0)).toFixed(1)} m<br />
+              Sub-base vol (200mm): {((roadDims.road_length_m ?? 0) * ((roadDims.carriageway_width_m ?? 0) + 2 * (roadDims.shoulder_width_m ?? 0)) * 0.2).toFixed(1)} m³
             </div>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
               <button className="btn btn-ghost" onClick={() => setShowRoadModal(false)}>Skip for now</button>
