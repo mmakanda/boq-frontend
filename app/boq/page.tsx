@@ -673,9 +673,9 @@ export default function BOQPage() {
                         </div>
                       ) : (
                         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-                          <thead style={{ position: 'sticky', top: 0, zIndex: 10 }}>
+                          <theadtyle={{ position: 'sticky', top: 0, zIndex: 10 }}>
                             <tr style={{ background: '#0a0d14', borderBottom: '2px solid #1e293b' }}>
-                              {['Mateal', 'Category', 'Unit', 'Qty Required', 'Unit Rate', 'Total Cost', 'Supplier Note'].map(h => (
+                              {['Material', 'Category', 'Unit', 'Qty Required', 'Unit Rate', 'Total Cost', 'Supplier Note'].map(h => (
                                 <th key={h} style={{ padding: '10px 12px', textAlign: ['Material', 'Category', 'Supplier Note'].includes(h) ? 'left' : 'right', color: '#475569', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>
                                   {h}
                                 </th>
@@ -689,24 +689,24 @@ export default function BOQPage() {
                                 <td style={{ padding: '9px 12px', color: '#64748b', fontSize: 12 }}>
                                   <span style={{ background: '#1e293b', padding: '2px 8px', borderRadius: 4 }}>{mat.category || '—'}</span>
                                 </td>
-                                <td style={{ padding: '9px 12px', color: '#94a3b8', textAlign: 'right', fontFamily: "'DM Mono', monospace" }}>{mat.unit}</td>
+                                <td style={{ padding: '9px 12px', color: '#94a3b8', textAlign: 'right', fontFamily: "'DM Mono', monospace" }}>{t.unit}</td>
                                 <td style={{ padding: '9px 12px', textAlign: 'right', fontFamily: "'DM Mono', monospace", color: '#e2e8f0' }}>
-                                  at.quantity_required?.toLocaleString() ?? '—'}
+                                  {mat.quantity_required?.toLocaleString() ?? '—'}
                                 </td>
                                 <td style={{ padding: '9px 12px', textAlign: 'right', fontFamily: "'DM Mono', monospace", color: '#94a3b8' }}>
                                   {fc(mat.unit_rate)}
-                                </td>
-                                <td style={{ padding: '9px 12px', textAlign: 'right', fontFamily: "'DM Mono', monospace", fontWeight: 700, color: '#f8fafc' }}>
-                                {fc(mat.total_cost)}
+                                </td                                <td style={{ padding: '9px 12px', textAlign: 'right', fontFamily: "'DM Mono', monospace", fontWeight: 700, color: '#f8fafc' }}>
+                                  {fc(mat.total_cost)}
                                 </td>
                                 <td style={{ padding: '9px 12px', color: '#64748b', fontSize: 11, maxWidth: 220 }}>
                                   {mat.supplier_note || '—'}
                                 </td>
                               </tr>
-                            ))}
+                          ))}
                           </tbody>
                           <tfoot>
-                            <tr style={{ background: '#0a0d14', borderTop: '2px solid #1e293b' }}                              <td colSpan={5} style={{ padding: '12px 16px', textAlign: 'right', color: '#64748b', fontSize: 12, fontWeight: 700, textTransform: 'uppercase' }}>Total Materials</td>
+                            <tr style={{ background: '#0a0d14', borderTop: '2px solid #1e293b' }}>
+                              <td colSpan={5} style={{ padding: '12px 16px', textAlign: 'right', color: '#64748b', fontSize: 12, fontWeight: 700, textTransform: 'uppercase' }}>Total Materials</td>
                               <td style={{ padding: '12px 16px', textAlign: 'right', fontFamily: "'DM Mono', monospace", fontWeight: 800, color: '#f59e0b', fontSize: 15 }}>
                                 {fc(boqData.material_schedule.reduce((s, m) => s + (m.total_cost ?? 0), 0))}
                               </td>
@@ -784,7 +784,7 @@ export default function BOQPage() {
   );
 }
 
-// ─── Editable row ─────────────────────────────────────────────────────────────
+// ─── Editable row ─────────────────────────────────────────────────────────
 function EditableRow({
   item, isEditing, onEdit, onSave, onCancel, formatCurrency, confidenceColor,
 }: {
@@ -797,7 +797,7 @@ function EditableRow({
   confidenceColor: (c: number | null) => string;
 }) {
   const [qty, setQty] = useState(String(item.quantity ?? ''));
-  const [rate, setRate] = useState(String(item.unit_rate ?? ''));
+ st [rate, setRate] = useState(String(item.unit_rate ?? ''));
 
   useEffect(() => {
     setQty(String(item.quantity ?? ''));
@@ -822,11 +822,11 @@ function EditableRow({
         {item.is_user_edited && <span style={{ color: '#f59e0b', marginLeft: 4, fontSize: 10 }}>✎</span>}
       </td>
       <td style={{ padding: '9px 12px', color: '#cbd5e1', maxWidth: 360 }}>
-        <span style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' } as any}>
+        <span style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden} as any}>
           {item.description}
         </span>
       </td>
-      <td style={{ padding: '9px 12px', color: '#94a3b8', textAlign: 'right', fontFamily: "'DM Mono', monoace" }}>
+      <td style={{ padding: '9px 12px', color: '#94a3b8', textAlign: 'right', fontFamily: "'DM Mono', monospace" }}>
         {item.unit ?? '—'}
       </td>
       <td style={{ padding: '9px 12px', textAlign: 'right' }}>
@@ -834,18 +834,18 @@ function EditableRow({
           <input className="edit-input" style={{ width: 80 }} value={qty}
             onChange={e => setQty(e.target.value)} onClick={e => e.stopPropagation()} />
         ) : (
-          <span style={{ fontFamily: "'DM Mono', monospace", color: '#e2e8f0' }}>
+          <span style={fontFamily: "'DM Mono', monospace", color: '#e2e8f0' }}>
             {item.quantity?.toLocaleString() ?? '—'}
           </span>
         )}
       </td>
-      <td style={{ pag: '9px 12px', textAlign: 'right' }}>
+      <td style={{ padding: '9px 12px', textAlign: 'right' }}>
         {isEditing ? (
           <input className="edit-input" style={{ width: 90 }} value={rate}
             onChange={e => setRate(e.target.value)} onClick={e => e.stopPropagation()} />
         ) : (
           <span style={{ fontFamily: "'DM Mono', monospace", color: '#94a3b8' }}>
-            {formatCurrency(item.unit_rate)}
+            ormatCurrency(item.unit_rate)}
           </span>
         )}
       </td>
@@ -862,10 +862,10 @@ function EditableRow({
         {isEditing ? (
           <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }} onClick={e => e.stopPropagation()}>
             <button className="btn btn-primary" onClick={handleSave} style={{ padding: '3px 10px', fontSize: 12 }}>✓</button>
-            <button className="btn btn-ghost" onClick={onCancel} style={{ padding: '3px 8px', fontSize: 12 }}>✕</button>
+            <button className="btn btnhost" onClick={onCancel} style={{ padding: '3px 8px', fontSize: 12 }}>✕</button>
           </div>
         ) : (
-          <span style={{ color: confidenceColor(item.confide, fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 700 }}>
+          <span style={{ color: confidenceColor(item.confidence), fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 700 }}>
             {item.confidence ? `${Math.round(item.confidence * 100)}%` : '—'}
           </span>
         )}
@@ -873,3 +873,4 @@ function EditableRow({
     </tr>
   );
 }
+
