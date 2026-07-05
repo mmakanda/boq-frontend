@@ -1,6 +1,5 @@
-// app/layout.tsx
 import type { Metadata } from 'next';
-import { AuthProvider } from '@/hooks/useAuth';
+import { ClerkProvider } from '@clerk/nextjs';
 
 export const metadata: Metadata = {
   title: 'BOQ Generator — Amaryllis Success',
@@ -9,12 +8,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body style={{ margin: 0, background: '#0f1117' }}>
-        <AuthProvider>
+    <ClerkProvider>
+      <html lang="en">
+        <body style={{ margin: 0, background: '#0f1117' }}>
           {children}
-        </AuthProvider>
-      </body>
-    </html>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }
