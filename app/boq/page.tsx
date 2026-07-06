@@ -52,7 +52,14 @@ export default function BOQPage() {
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    setClerkTokenGetter(() => getToken());
+      setClerkTokenGetter(async () => {
+    try {
+      const token = await getToken();
+      return token;
+    } catch {
+      return null;
+    }
+  });
   }, [getToken]);
 
   useEffect(() => {
@@ -262,6 +269,11 @@ export default function BOQPage() {
       <div style={{ width: 48, height: 48, border: '3px solid #334155', borderTopColor: '#f59e0b', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
     </div>
   );
+
+  if (isLoaded && !user) {
+  router.push('/sign-in');
+  return null;
+  }
 
   return (
     <>

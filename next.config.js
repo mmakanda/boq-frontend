@@ -25,12 +25,12 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.clerk.accounts.dev https://*.clerk.com https://*.boq.amaryllissuccess.co.zw https://challenges.cloudflare.com",
-              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-              "font-src 'self' https://fonts.gstatic.com",
-              "img-src 'self' data: blob: https://*.clerk.com https://img.clerk.com https://*.boq.amaryllissuccess.co.zw",
-              "connect-src 'self' https://amaryllis-boq-production.up.railway.app https://*.clerk.accounts.dev https://*.clerk.com https://*.boq.amaryllissuccess.co.zw",
-              "frame-src 'self' https://challenges.cloudflare.com https://*.clerk.accounts.dev https://*.clerk.com https://*.boq.amaryllissuccess.co.zw",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://clerk.com https://*.clerk.com https://*.clerk.accounts.dev https://challenges.cloudflare.com",
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://clerk.com https://*.clerk.com",
+              "font-src 'self' https://fonts.gstatic.com https://clerk.com https://*.clerk.com",
+              "img-src 'self' data: blob: https://clerk.com https://*.clerk.com https://img.clerk.com",
+              "connect-src 'self' https://amaryllis-boq-production.up.railway.app https://clerk.com https://*.clerk.com https://*.clerk.accounts.dev wss://*.clerk.accounts.dev",
+              "frame-src 'self' https://clerk.com https://*.clerk.com https://*.clerk.accounts.dev https://challenges.cloudflare.com",
               "worker-src 'self' blob:",
             ].join('; '),
           },
@@ -43,4 +43,5 @@ const nextConfig = {
     ];
   },
 };
+
 module.exports = nextConfig;
