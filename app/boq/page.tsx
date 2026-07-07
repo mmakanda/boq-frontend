@@ -7,16 +7,15 @@ import { api, setClerkTokenGetter } from '@/lib/api';
 import type { BOQProject, BOQItem, BOQResponse, MaterialScheduleItem, RoadDimensions } from '@/types';
 
 const MAX_FILE_MB = 20;
-const ALLOWED_TYPES = ['application/pdf', 'image/png', 'image/jpeg'];
 const ALLOWED_EXTS = ['.pdf', '.png', '.jpg', '.jpeg'];
 
 const PROJECT_TYPES = [
-  { value: 'residential', label: '[Res] Residential', desc: 'Houses, flats, townhouses' },
-  { value: 'civil', label: '[Civil] Civil / Roads', desc: 'Roads, drainage, water reticulation' },
-  { value: 'commercial', label: '[Comm] Commercial', desc: 'Offices, retail, warehouses' },
-  { value: 'steel', label: '[Steel] Steel Structure', desc: 'Portal frames, industrial sheds' },
-  { value: 'dam', label: '[Dam] Dam / Hydraulic', desc: 'Dams, weirs, reservoirs' },
-  { value: 'renovation', label: '[Reno] Renovation', desc: 'Extensions, refurbishments' },
+  { value: 'residential', label: '🏠 Residential', desc: 'Houses, flats, townhouses' },
+  { value: 'civil', label: '🛣 Civil / Roads', desc: 'Roads, drainage, water reticulation' },
+  { value: 'commercial', label: '🏢 Commercial', desc: 'Offices, retail, warehouses' },
+  { value: 'steel', label: '🏗 Steel Structure', desc: 'Portal frames, industrial sheds' },
+  { value: 'dam', label: '💧 Dam / Hydraulic', desc: 'Dams, weirs, reservoirs' },
+  { value: 'renovation', label: '🔨 Renovation', desc: 'Extensions, refurbishments' },
 ];
 
 export default function BOQPage() {
@@ -52,23 +51,17 @@ export default function BOQPage() {
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-      setClerkTokenGetter(async () => {
-    try {
-      const token = await getToken();
-      return token;
-    } catch {
-      return null;
-    }
-  });
+    setClerkTokenGetter(async () => {
+      try { return await getToken(); } catch { return null; }
+    });
   }, [getToken]);
 
   useEffect(() => {
     if (isLoaded && user) loadProjects();
+    if (isLoaded && !user) router.push('/sign-in');
   }, [isLoaded, user]);
 
-  useEffect(() => () => {
-    if (pollRef.current) clearInterval(pollRef.current);
-  }, []);
+  useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current); }, []);
 
   const loadProjects = async () => {
     try {
@@ -90,11 +83,8 @@ export default function BOQPage() {
     setError(null);
     setActiveTab('boq');
     setBOQData(null);
-    if (project.status === 'ready') {
-      await loadBOQ(project.id);
-    } else if (project.status === 'processing') {
-      startPolling(project.id);
-    }
+    if (project.status === 'ready') await loadBOQ(project.id);
+    else if (project.status === 'processing') startPolling(project.id);
   };
 
   const startPolling = (projectId: string) => {
@@ -116,7 +106,7 @@ export default function BOQPage() {
           clearInterval(pollRef.current!);
           setProcessing(false);
           setSelectedProject(proj);
-          setError(proj.error_message || 'Extraction failed. Please try again.');
+          setError(proj.error_message || 'Extraction failed.');
         }
       } catch { }
     }, 3000);
@@ -126,8 +116,7 @@ export default function BOQPage() {
     if (file.size > MAX_FILE_MB * 1024 * 1024) return `File too large. Max ${MAX_FILE_MB} MB.`;
     const ext = '.' + file.name.split('.').pop()?.toLowerCase();
     if (!ALLOWED_EXTS.includes(ext)) return 'Accepted: PDF, PNG, JPG.';
-    if (!ALLOWED_TYPES.includes(file.type)) return 'MIME type not accepted.';
-    return null;
+    return null; // removed MIME type check — browsers report inconsistently
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -161,11 +150,8 @@ export default function BOQPage() {
       setProjects(prev => [{ ...project, status: 'processing' as const }, ...prev]);
       setNewName(''); setNewDesc(''); setSelectedFile(null); setNewType('residential');
       await openProject({ ...project, status: 'processing' as const });
-    } catch (e: any) {
-      setError(e.message);
-    } finally {
-      setUploading(false);
-    }
+    } catch (e: any) { setError(e.message); }
+    finally { setUploading(false); }
   };
 
   const handleRoadDimensions = async () => {
@@ -175,13 +161,10 @@ export default function BOQPage() {
       const result = await api.setRoadDimensions(selectedProject.id, roadDims);
       setShowRoadModal(false);
       await loadBOQ(selectedProject.id);
-      setSuccess(`Quantities recalculated. Total: $${result.total_project_cost?.toLocaleString() ?? '--'}`);
+      setSuccess(`Quantities recalculated. Total: $${result.total_project_cost?.toLocaleString() ?? '—'}`);
       setTimeout(() => setSuccess(null), 5000);
-    } catch (e: any) {
-      setError(e.message);
-    } finally {
-      setRoadLoading(false);
-    }
+    } catch (e: any) { setError(e.message); }
+    finally { setRoadLoading(false); }
   };
 
   const handleItemUpdate = async (item: BOQItem, field: keyof BOQItem, value: string | number) => {
@@ -191,10 +174,7 @@ export default function BOQPage() {
       setBOQData(prev => prev ? {
         ...prev,
         items: prev.items.map(i => i.id === updated.id ? updated : i),
-        total_amount: prev.items.reduce((sum, i) => {
-          const it = i.id === updated.id ? updated : i;
-          return sum + (it.amount ?? 0);
-        }, 0),
+        total_amount: prev.items.reduce((sum, i) => sum + ((i.id === updated.id ? updated : i).amount ?? 0), 0),
       } : prev);
       setEditingItem(null);
     } catch (e: any) { setError(e.message); }
@@ -225,36 +205,23 @@ export default function BOQPage() {
     try {
       await api.deleteProject(projectId);
       setProjects(prev => prev.filter(p => p.id !== projectId));
-      if (selectedProject?.id === projectId) {
-        setView('dashboard');
-        setBOQData(null);
-        setSelectedProject(null);
-      }
+      if (selectedProject?.id === projectId) { setView('dashboard'); setBOQData(null); setSelectedProject(null); }
     } catch (e: any) { setError(e.message); }
   };
 
   const fc = (v: number | null | undefined) =>
-    v != null ? `$${v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '--';
+    v != null ? `$${v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—';
 
-  const confidenceColor = (c: number | null) => {
-    if (!c) return '#6b7280';
-    if (c >= 0.8) return '#16a34a';
-    if (c >= 0.5) return '#d97706';
-    return '#dc2626';
-  };
+  const confidenceColor = (c: number | null) => !c ? '#6b7280' : c >= 0.8 ? '#16a34a' : c >= 0.5 ? '#d97706' : '#dc2626';
 
   const statusBadge = (status: BOQProject['status']) => {
     const map = {
       ready: { bg: '#dcfce7', color: '#166534', label: 'Ready' },
-      processing: { bg: '#fef9c3', color: '#713f12', label: 'Processing...' },
+      processing: { bg: '#fef9c3', color: '#713f12', label: 'Processing…' },
       failed: { bg: '#fee2e2', color: '#991b1b', label: 'Failed' },
     };
     const s = map[status];
-    return (
-      <span style={{ background: s.bg, color: s.color, padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-        {s.label}
-      </span>
-    );
+    return <span style={{ background: s.bg, color: s.color, padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{s.label}</span>;
   };
 
   const grouped = boqData?.items.reduce<Record<string, BOQItem[]>>((acc, item) => {
@@ -270,10 +237,7 @@ export default function BOQPage() {
     </div>
   );
 
-  if (isLoaded && !user) {
-  router.push('/sign-in');
-  return null;
-  }
+  if (!user) return null;
 
   return (
     <>
@@ -292,6 +256,8 @@ export default function BOQPage() {
         .btn-ghost:hover:not(:disabled) { background: #1e293b; color: #e2e8f0; }
         .btn-danger { background: transparent; color: #ef4444; padding: 6px 12px; font-size: 12px; border: 1px solid #ef444440; }
         .btn-danger:hover { background: #ef444415; }
+        .btn-signout { background: transparent; color: #64748b; padding: 5px 10px; font-size: 11px; border: 1px solid #1e293b; border-radius: 5px; cursor: pointer; font-family: 'Barlow', sans-serif; font-weight: 600; transition: all 0.15s; }
+        .btn-signout:hover { background: #1e293b; color: #e2e8f0; }
         .input { background: #1e293b; border: 1px solid #334155; border-radius: 6px; color: #e2e8f0; padding: 10px 14px; font-family: 'Barlow', sans-serif; font-size: 14px; width: 100%; outline: none; transition: border-color 0.15s; }
         .input:focus { border-color: #f59e0b; }
         .card { background: #161b27; border: 1px solid #1e293b; border-radius: 10px; }
@@ -309,15 +275,19 @@ export default function BOQPage() {
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #0f1117; }
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+        .cl-userButtonPopoverCard { background: #161b27 !important; border: 1px solid #334155 !important; }
+        .cl-userButtonPopoverActionButton { color: #e2e8f0 !important; }
+        .cl-userButtonPopoverActionButton:hover { background: #1e293b !important; }
+        .cl-avatarBox { width: 28px !important; height: 28px !important; }
       `}</style>
 
       {/* Road Dimensions Modal */}
       {showRoadModal && (
         <div className="modal-overlay" onClick={() => setShowRoadModal(false)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
-            <h3 style={{ fontSize: 16, fontWeight: 700, color: '#f8fafc', marginBottom: 6 }}>[Civil] Set Road Dimensions</h3>
+            <h3 style={{ fontSize: 16, fontWeight: 700, color: '#f8fafc', marginBottom: 6 }}>🛣 Set Road Dimensions</h3>
             <p style={{ fontSize: 12, color: '#64748b', marginBottom: 20, lineHeight: 1.6 }}>
-              Cross-section drawings show layer thicknesses only. Enter road length and width to calculate correct volumes (L x W x thickness).
+              Cross-section drawings show layer thicknesses only. Enter road length and width to calculate correct volumes (L × W × thickness).
             </p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 20 }}>
               {[
@@ -337,15 +307,15 @@ export default function BOQPage() {
             </div>
             <div style={{ background: '#1e293b', borderRadius: 6, padding: '10px 14px', marginBottom: 20, fontSize: 12, color: '#64748b', lineHeight: 1.8 }}>
               <strong style={{ color: '#94a3b8' }}>Preview:</strong><br />
-              Carriageway area: <strong style={{ color: '#e2e8f0' }}>{(roadDims.road_length_m * roadDims.carriageway_width_m).toFixed(1)} m^2</strong><br />
+              Carriageway area: <strong style={{ color: '#e2e8f0' }}>{(roadDims.road_length_m * roadDims.carriageway_width_m).toFixed(1)} m²</strong><br />
               Formation width: <strong style={{ color: '#e2e8f0' }}>{((roadDims.carriageway_width_m || 0) + 2 * (roadDims.shoulder_width_m || 0)).toFixed(1)} m</strong><br />
-              Sub-base vol (200mm): <strong style={{ color: '#e2e8f0' }}>{(roadDims.road_length_m * ((roadDims.carriageway_width_m || 0) + 2 * (roadDims.shoulder_width_m || 0)) * 0.2).toFixed(1)} m^3</strong>
+              Sub-base vol (200mm): <strong style={{ color: '#e2e8f0' }}>{(roadDims.road_length_m * ((roadDims.carriageway_width_m || 0) + 2 * (roadDims.shoulder_width_m || 0)) * 0.2).toFixed(1)} m³</strong>
             </div>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
               <button className="btn btn-ghost" onClick={() => setShowRoadModal(false)}>Skip for now</button>
               <button className="btn btn-primary" onClick={handleRoadDimensions}
                 disabled={roadLoading || !roadDims.road_length_m || !roadDims.carriageway_width_m}>
-                {roadLoading ? '... Calculating...' : '* Recalculate Quantities'}
+                {roadLoading ? '⟳ Calculating…' : '⚡ Recalculate Quantities'}
               </button>
             </div>
           </div>
@@ -359,7 +329,7 @@ export default function BOQPage() {
           <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid #1e293b' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <div style={{ width: 32, height: 32, background: '#f59e0b', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <span style={{ fontSize: 16 }}>[BOQ]</span>
+                <span style={{ fontSize: 14, fontWeight: 800, color: '#0f1117' }}>BOQ</span>
               </div>
               <div>
                 <div style={{ fontSize: 13, fontWeight: 700, color: '#f8fafc' }}>BOQ Generator</div>
@@ -371,11 +341,11 @@ export default function BOQPage() {
           <nav style={{ flex: 1, padding: 12, overflow: 'auto' }}>
             <button className="btn" onClick={() => { setView('dashboard'); setSelectedProject(null); setBOQData(null); }}
               style={{ width: '100%', textAlign: 'left', padding: '8px 12px', borderRadius: 6, background: view === 'dashboard' ? '#1e293b' : 'transparent', color: view === 'dashboard' ? '#f8fafc' : '#64748b', fontSize: 13, marginBottom: 4, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span>[#]</span> All Projects
+              ⊞ All Projects
             </button>
             <button className="btn" onClick={() => { setView('new'); setError(null); }}
               style={{ width: '100%', textAlign: 'left', padding: '8px 12px', borderRadius: 6, background: view === 'new' ? '#1e293b' : 'transparent', color: view === 'new' ? '#f59e0b' : '#64748b', fontSize: 13, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span>+</span> New Project
+              ＋ New Project
             </button>
 
             {projects.length > 0 && (
@@ -384,7 +354,7 @@ export default function BOQPage() {
                 {projects.slice(0, 8).map(p => (
                   <button key={p.id} className="btn" onClick={() => openProject(p)}
                     style={{ width: '100%', textAlign: 'left', padding: '7px 12px', borderRadius: 6, background: selectedProject?.id === p.id ? '#1e293b' : 'transparent', color: selectedProject?.id === p.id ? '#f8fafc' : '#475569', fontSize: 12, marginBottom: 2, display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    <span style={{ fontSize: 8, flexShrink: 0, color: p.status === 'ready' ? '#16a34a' : p.status === 'failed' ? '#ef4444' : '#f59e0b' }}>*</span>
+                    <span style={{ fontSize: 8, flexShrink: 0, color: p.status === 'ready' ? '#16a34a' : p.status === 'failed' ? '#ef4444' : '#f59e0b' }}>●</span>
                     <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</span>
                   </button>
                 ))}
@@ -392,16 +362,26 @@ export default function BOQPage() {
             )}
           </nav>
 
-          <div style={{ padding: '12px 16px', borderTop: '1px solid #1e293b', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-            <div style={{ overflow: 'hidden', flex: 1 }}>
-              <div style={{ fontSize: 12, color: '#e2e8f0', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {user?.fullName || user?.primaryEmailAddress?.emailAddress}
-              </div>
-              <div style={{ fontSize: 10, color: '#475569', fontFamily: "'DM Mono', monospace", overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {user?.primaryEmailAddress?.emailAddress}
+          {/* User section with explicit sign out */}
+          <div style={{ padding: '12px 16px', borderTop: '1px solid #1e293b' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+              <UserButton afterSignOutUrl="/sign-in" />
+              <div style={{ overflow: 'hidden', flex: 1 }}>
+                <div style={{ fontSize: 12, color: '#e2e8f0', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {user?.fullName || user?.primaryEmailAddress?.emailAddress}
+                </div>
+                <div style={{ fontSize: 10, color: '#475569', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {user?.primaryEmailAddress?.emailAddress}
+                </div>
               </div>
             </div>
-            <UserButton />
+            <button
+              className="btn-signout"
+              style={{ width: '100%' }}
+              onClick={() => signOut(() => router.push('/sign-in'))}
+            >
+              Sign out
+            </button>
           </div>
         </aside>
 
@@ -411,7 +391,7 @@ export default function BOQPage() {
           {(error || success) && (
             <div style={{ padding: '10px 20px', fontSize: 13, fontWeight: 500, background: error ? '#450a0a' : '#052e16', color: error ? '#fca5a5' : '#86efac', borderBottom: `1px solid ${error ? '#7f1d1d' : '#14532d'}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span>{error || success}</span>
-              <button className="btn" onClick={() => { setError(null); setSuccess(null); }} style={{ background: 'none', color: 'inherit', padding: '0 4px', fontSize: 16, opacity: 0.6 }}>x</button>
+              <button className="btn" onClick={() => { setError(null); setSuccess(null); }} style={{ background: 'none', color: 'inherit', padding: '0 4px', fontSize: 16, opacity: 0.6 }}>×</button>
             </div>
           )}
 
@@ -428,7 +408,7 @@ export default function BOQPage() {
 
               {projects.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '80px 0' }}>
-                  <div style={{ fontSize: 48, marginBottom: 16 }}>[Draw]</div>
+                  <div style={{ fontSize: 48, marginBottom: 16 }}>📐</div>
                   <p style={{ color: '#475569', fontSize: 15, marginBottom: 20 }}>No projects yet. Upload a drawing to get started.</p>
                   <button className="btn btn-primary" onClick={() => setView('new')}>Upload First Drawing</button>
                 </div>
@@ -444,7 +424,7 @@ export default function BOQPage() {
                         {statusBadge(p.status)}
                       </div>
                       <div style={{ fontSize: 11, color: '#475569', marginBottom: 8 }}>
-                        {PROJECT_TYPES.find(t => t.value === p.project_type)?.label || '[Res] Residential'}
+                        {PROJECT_TYPES.find(t => t.value === p.project_type)?.label || '🏠 Residential'}
                       </div>
                       {p.total_project_cost && (
                         <div style={{ fontSize: 15, fontWeight: 800, color: '#f59e0b', fontFamily: "'DM Mono', monospace", marginBottom: 8 }}>
@@ -453,7 +433,7 @@ export default function BOQPage() {
                       )}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ fontSize: 11, color: '#475569', fontFamily: "'DM Mono', monospace" }}>
-                          {p.item_count} items | {new Date(p.created_at).toLocaleDateString()}
+                          {p.item_count} items · {new Date(p.created_at).toLocaleDateString()}
                         </span>
                         <button className="btn btn-danger"
                           onClick={e => { e.stopPropagation(); handleDeleteProject(p.id); }}
@@ -469,14 +449,14 @@ export default function BOQPage() {
           {/* New Project */}
           {view === 'new' && (
             <div style={{ flex: 1, overflow: 'auto', padding: 32, maxWidth: 640 }} className="fade-in">
-              <button className="btn btn-ghost" onClick={() => setView('dashboard')} style={{ marginBottom: 24, fontSize: 12 }}>&larr; Back</button>
+              <button className="btn btn-ghost" onClick={() => setView('dashboard')} style={{ marginBottom: 24, fontSize: 12 }}>← Back</button>
               <h1 style={{ fontSize: 22, fontWeight: 800, marginBottom: 6, color: '#f8fafc' }}>New BOQ Project</h1>
               <p style={{ color: '#475569', fontSize: 13, marginBottom: 28 }}>Upload an engineering drawing. AI extracts quantities and costs automatically.</p>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                 <div>
                   <label style={{ display: 'block', fontSize: 12, color: '#94a3b8', marginBottom: 6, fontWeight: 600 }}>Project Name *</label>
-                  <input className="input" placeholder="e.g. Tarisa Road Phase 2 -- Drainage" value={newName}
+                  <input className="input" placeholder="e.g. Tarisa Road Phase 2 — Drainage" value={newName}
                     onChange={e => setNewName(e.target.value)} maxLength={255} />
                 </div>
 
@@ -495,19 +475,19 @@ export default function BOQPage() {
 
                 <div>
                   <label style={{ display: 'block', fontSize: 12, color: '#94a3b8', marginBottom: 6, fontWeight: 600 }}>Description</label>
-                  <textarea className="input" placeholder="Optional notes..." value={newDesc}
+                  <textarea className="input" placeholder="Optional notes…" value={newDesc}
                     onChange={e => setNewDesc(e.target.value)} rows={2}
                     style={{ resize: 'vertical', fontFamily: 'inherit' }} maxLength={2000} />
                 </div>
 
                 <div>
                   <label style={{ display: 'block', fontSize: 12, color: '#94a3b8', marginBottom: 6, fontWeight: 600 }}>
-                    Drawing File * (PDF, PNG, JPG -- max 20 MB)
+                    Drawing File * (PDF, PNG, JPG — max 20 MB)
                   </label>
                   <div onDragOver={e => e.preventDefault()} onDrop={handleDrop}
                     onClick={() => fileInputRef.current?.click()}
                     style={{ border: `2px dashed ${fileError ? '#ef4444' : selectedFile ? '#f59e0b' : '#334155'}`, borderRadius: 8, padding: '28px 20px', textAlign: 'center', cursor: 'pointer', background: selectedFile ? '#f59e0b0a' : '#1e293b20', transition: 'all 0.2s' }}>
-                    <div style={{ fontSize: 28, marginBottom: 8 }}>{selectedFile ? '[File]' : '^'}</div>
+                    <div style={{ fontSize: 28, marginBottom: 8 }}>{selectedFile ? '📄' : '⬆'}</div>
                     {selectedFile ? (
                       <div>
                         <p style={{ color: '#f59e0b', fontSize: 14, fontWeight: 600 }}>{selectedFile.name}</p>
@@ -523,9 +503,9 @@ export default function BOQPage() {
 
                 {newType === 'civil' && (
                   <div style={{ background: '#1e293b', borderRadius: 8, padding: '14px 16px', border: '1px solid #334155' }}>
-                    <div style={{ fontSize: 12, color: '#f59e0b', fontWeight: 700, marginBottom: 4 }}>[Civil] Civil Project Note</div>
+                    <div style={{ fontSize: 12, color: '#f59e0b', fontWeight: 700, marginBottom: 4 }}>🛣 Civil Project Note</div>
                     <p style={{ fontSize: 12, color: '#64748b', lineHeight: 1.6 }}>
-                      After upload you'll enter road length and carriageway width. Cross-sections show layer thicknesses only -- dimensions needed to calculate volumes (L x W x thickness).
+                      After upload you'll enter road length and carriageway width. Cross-sections show layer thicknesses only — dimensions needed to calculate volumes.
                     </p>
                   </div>
                 )}
@@ -533,7 +513,7 @@ export default function BOQPage() {
                 <button className="btn btn-primary" onClick={handleCreateProject}
                   disabled={uploading || !newName.trim() || !selectedFile || !!fileError}
                   style={{ alignSelf: 'flex-start', minWidth: 180 }}>
-                  {uploading ? '... Uploading...' : '* Extract BOQ'}
+                  {uploading ? '⟳ Uploading…' : '⚡ Extract BOQ'}
                 </button>
               </div>
             </div>
@@ -548,7 +528,7 @@ export default function BOQPage() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   <button className="btn btn-ghost"
                     onClick={() => { setView('dashboard'); setBOQData(null); setSelectedProject(null); }}
-                    style={{ padding: '4px 10px', fontSize: 12 }}>&larr;</button>
+                    style={{ padding: '4px 10px', fontSize: 12 }}>←</button>
                   <div>
                     <h2 style={{ fontSize: 15, fontWeight: 700, color: '#f8fafc' }}>{selectedProject.name}</h2>
                     <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 2 }}>
@@ -556,11 +536,7 @@ export default function BOQPage() {
                       <span style={{ fontSize: 11, color: '#475569' }}>
                         {PROJECT_TYPES.find(t => t.value === selectedProject.project_type)?.label}
                       </span>
-                      {boqData && (
-                        <span style={{ fontSize: 11, color: '#475569', fontFamily: "'DM Mono', monospace" }}>
-                          {boqData.items.length} items
-                        </span>
-                      )}
+                      {boqData && <span style={{ fontSize: 11, color: '#475569', fontFamily: "'DM Mono', monospace" }}>{boqData.items.length} items</span>}
                     </div>
                   </div>
                 </div>
@@ -574,13 +550,11 @@ export default function BOQPage() {
                     </div>
                   )}
                   {selectedProject.project_type === 'civil' && selectedProject.status === 'ready' && (
-                    <button className="btn btn-ghost" onClick={() => setShowRoadModal(true)} style={{ fontSize: 12 }}>
-                      [Civil] Road Dims
-                    </button>
+                    <button className="btn btn-ghost" onClick={() => setShowRoadModal(true)} style={{ fontSize: 12 }}>🛣 Road Dims</button>
                   )}
                   {selectedProject.status === 'ready' && (
                     <button className="btn btn-primary" onClick={handleExport} disabled={exporting} style={{ fontSize: 13 }}>
-                      {exporting ? '... Exporting...' : 'v Export XLSX'}
+                      {exporting ? '⟳ Exporting…' : '↓ Export XLSX'}
                     </button>
                   )}
                 </div>
@@ -591,10 +565,8 @@ export default function BOQPage() {
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
                   <div style={{ width: 56, height: 56, border: '3px solid #1e293b', borderTopColor: '#f59e0b', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
                   <div style={{ textAlign: 'center' }}>
-                    <p style={{ color: '#f8fafc', fontSize: 15, fontWeight: 600 }}>Analysing drawing...</p>
-                    <p style={{ color: '#475569', fontSize: 13, marginTop: 4 }}>
-                      Extracting quantities, applying Zimbabwe rates, generating material schedule. 30-90 seconds.
-                    </p>
+                    <p style={{ color: '#f8fafc', fontSize: 15, fontWeight: 600 }}>Analysing drawing…</p>
+                    <p style={{ color: '#475569', fontSize: 13, marginTop: 4 }}>Extracting quantities, applying Zimbabwe rates, generating material schedule. 30–90 seconds.</p>
                   </div>
                 </div>
               )}
@@ -602,28 +574,19 @@ export default function BOQPage() {
               {/* Failed */}
               {selectedProject.status === 'failed' && (
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
-                  <div style={{ fontSize: 48 }}>[!]</div>
+                  <div style={{ fontSize: 48 }}>⚠</div>
                   <p style={{ color: '#fca5a5', fontSize: 15, fontWeight: 600 }}>Extraction failed</p>
-                  <p style={{ color: '#64748b', fontSize: 13, maxWidth: 400, textAlign: 'center' }}>
-                    {selectedProject.error_message}
-                  </p>
+                  <p style={{ color: '#64748b', fontSize: 13, maxWidth: 400, textAlign: 'center' }}>{selectedProject.error_message}</p>
                 </div>
               )}
 
               {/* Ready */}
               {selectedProject.status === 'ready' && boqData && (
                 <>
-                  {/* Tabs */}
                   <div style={{ borderBottom: '1px solid #1e293b', padding: '0 24px', display: 'flex', gap: 4, background: '#0a0d14' }}>
-                    <button className={`tab ${activeTab === 'boq' ? 'active' : ''}`} onClick={() => setActiveTab('boq')}>
-                      BOQ Items ({boqData.items.length})
-                    </button>
-                    <button className={`tab ${activeTab === 'materials' ? 'active' : ''}`} onClick={() => setActiveTab('materials')}>
-                      Material Schedule ({boqData.material_schedule?.length ?? 0})
-                    </button>
-                    <button className={`tab ${activeTab === 'cost' ? 'active' : ''}`} onClick={() => setActiveTab('cost')}>
-                      Cost Summary
-                    </button>
+                    <button className={`tab ${activeTab === 'boq' ? 'active' : ''}`} onClick={() => setActiveTab('boq')}>BOQ Items ({boqData.items.length})</button>
+                    <button className={`tab ${activeTab === 'materials' ? 'active' : ''}`} onClick={() => setActiveTab('materials')}>Material Schedule ({boqData.material_schedule?.length ?? 0})</button>
+                    <button className={`tab ${activeTab === 'cost' ? 'active' : ''}`} onClick={() => setActiveTab('cost')}>Cost Summary</button>
                   </div>
 
                   {/* BOQ Tab */}
@@ -633,9 +596,7 @@ export default function BOQPage() {
                         <thead style={{ position: 'sticky', top: 0, zIndex: 10 }}>
                           <tr style={{ background: '#0a0d14', borderBottom: '2px solid #1e293b' }}>
                             {['Item', 'Description', 'Unit', 'Qty', 'Rate (USD)', 'Materials', 'Labour', 'Amount (USD)', 'Conf.'].map(h => (
-                              <th key={h} style={{ padding: '10px 12px', textAlign: h === 'Description' ? 'left' : 'right', color: '#475569', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>
-                                {h}
-                              </th>
+                              <th key={h} style={{ padding: '10px 12px', textAlign: h === 'Description' ? 'left' : 'right', color: '#475569', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>{h}</th>
                             ))}
                           </tr>
                         </thead>
@@ -646,9 +607,7 @@ export default function BOQPage() {
                                 <td colSpan={9} className="section-header">{section}</td>
                               </tr>
                               {(grouped?.[section] ?? []).map(item => (
-                                <EditableRow
-                                  key={item.id}
-                                  item={item}
+                                <EditableRow key={item.id} item={item}
                                   isEditing={editingItem === item.id}
                                   onEdit={() => setEditingItem(item.id)}
                                   onSave={(field, val) => handleItemUpdate(item, field, val)}
@@ -664,9 +623,7 @@ export default function BOQPage() {
                           <tfoot>
                             <tr style={{ background: '#0a0d14', borderTop: '2px solid #1e293b' }}>
                               <td colSpan={7} style={{ padding: '12px 16px', textAlign: 'right', color: '#64748b', fontSize: 12, fontWeight: 700, textTransform: 'uppercase' }}>Subtotal</td>
-                              <td style={{ padding: '12px 16px', textAlign: 'right', fontFamily: "'DM Mono', monospace", fontWeight: 800, color: '#f59e0b', fontSize: 15 }}>
-                                {fc(boqData.total_amount)}
-                              </td>
+                              <td style={{ padding: '12px 16px', textAlign: 'right', fontFamily: "'DM Mono', monospace", fontWeight: 800, color: '#f59e0b', fontSize: 15 }}>{fc(boqData.total_amount)}</td>
                               <td />
                             </tr>
                           </tfoot>
@@ -680,7 +637,7 @@ export default function BOQPage() {
                     <div style={{ flex: 1, overflow: 'auto' }}>
                       {(!boqData.material_schedule || boqData.material_schedule.length === 0) ? (
                         <div style={{ textAlign: 'center', padding: '60px 0', color: '#475569' }}>
-                          <div style={{ fontSize: 36, marginBottom: 12 }}>[Mat]</div>
+                          <div style={{ fontSize: 36, marginBottom: 12 }}>📦</div>
                           <p>No material schedule generated yet.</p>
                         </div>
                       ) : (
@@ -688,9 +645,7 @@ export default function BOQPage() {
                           <thead style={{ position: 'sticky', top: 0, zIndex: 10 }}>
                             <tr style={{ background: '#0a0d14', borderBottom: '2px solid #1e293b' }}>
                               {['Material', 'Category', 'Unit', 'Qty Required', 'Unit Rate', 'Total Cost', 'Supplier Note'].map(h => (
-                                <th key={h} style={{ padding: '10px 12px', textAlign: ['Material', 'Category', 'Supplier Note'].includes(h) ? 'left' : 'right', color: '#475569', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>
-                                  {h}
-                                </th>
+                                <th key={h} style={{ padding: '10px 12px', textAlign: ['Material', 'Category', 'Supplier Note'].includes(h) ? 'left' : 'right', color: '#475569', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>{h}</th>
                               ))}
                             </tr>
                           </thead>
@@ -699,191 +654,10 @@ export default function BOQPage() {
                               <tr key={mat.id || i} className="row-hover" style={{ borderBottom: '1px solid #1e293b1a' }}>
                                 <td style={{ padding: '9px 12px', color: '#e2e8f0', fontWeight: 500 }}>{mat.material_name}</td>
                                 <td style={{ padding: '9px 12px', color: '#64748b', fontSize: 12 }}>
-                                  <span style={{ background: '#1e293b', padding: '2px 8px', borderRadius: 4 }}>{mat.category || '--'}</span>
+                                  <span style={{ background: '#1e293b', padding: '2px 8px', borderRadius: 4 }}>{mat.category || '—'}</span>
                                 </td>
                                 <td style={{ padding: '9px 12px', color: '#94a3b8', textAlign: 'right', fontFamily: "'DM Mono', monospace" }}>{mat.unit}</td>
-                                <td style={{ padding: '9px 12px', textAlign: 'right', fontFamily: "'DM Mono', monospace", color: '#e2e8f0' }}>
-                                  {mat.quantity_required?.toLocaleString() ?? '--'}
-                                </td>
-                                <td style={{ padding: '9px 12px', textAlign: 'right', fontFamily: "'DM Mono', monospace", color: '#94a3b8' }}>
-                                  {fc(mat.unit_rate)}
-                                </td>
-                                <td style={{ padding: '9px 12px', textAlign: 'right', fontFamily: "'DM Mono', monospace", fontWeight: 700, color: '#f8fafc' }}>
-                                  {fc(mat.total_cost)}
-                                </td>
-                                <td style={{ padding: '9px 12px', color: '#64748b', fontSize: 11, maxWidth: 220 }}>
-                                  {mat.supplier_note || '--'}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                          <tfoot>
-                            <tr style={{ background: '#0a0d14', borderTop: '2px solid #1e293b' }}>
-                              <td colSpan={5} style={{ padding: '12px 16px', textAlign: 'right', color: '#64748b', fontSize: 12, fontWeight: 700, textTransform: 'uppercase' }}>Total Materials</td>
-                              <td style={{ padding: '12px 16px', textAlign: 'right', fontFamily: "'DM Mono', monospace", fontWeight: 800, color: '#f59e0b', fontSize: 15 }}>
-                                {fc(boqData.material_schedule.reduce((s, m) => s + (m.total_cost ?? 0), 0))}
-                              </td>
-                              <td />
-                            </tr>
-                          </tfoot>
-                        </table>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Cost Summary Tab */}
-                  {activeTab === 'cost' && (
-                    <div style={{ flex: 1, overflow: 'auto', padding: 32 }}>
-                      {!boqData.cost_summary ? (
-                        <div style={{ textAlign: 'center', padding: '60px 0', color: '#475569' }}>
-                          <p>Cost summary not available.</p>
-                        </div>
-                      ) : (
-                        <div style={{ maxWidth: 560 }}>
-                          <h2 style={{ fontSize: 18, fontWeight: 800, color: '#f8fafc', marginBottom: 24 }}>Cost Summary</h2>
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 28 }}>
-                            {[
-                              { label: 'Materials', value: boqData.cost_summary.total_materials_cost, color: '#3b82f6' },
-                              { label: 'Labour', value: boqData.cost_summary.total_labour_cost, color: '#8b5cf6' },
-                              { label: 'Subcontractors', value: boqData.cost_summary.total_subcontractor_cost, color: '#06b6d4' },
-                            ].map(item => (
-                              <div key={item.label} className="card" style={{ padding: '16px 20px' }}>
-                                <div style={{ fontSize: 11, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>{item.label}</div>
-                                <div style={{ fontSize: 20, fontWeight: 800, color: item.color, fontFamily: "'DM Mono', monospace" }}>{fc(item.value)}</div>
-                              </div>
-                            ))}
-                          </div>
-                          <div className="card" style={{ overflow: 'hidden', marginBottom: 20 }}>
-                            {(() => {
-                              const sub = (boqData.cost_summary.total_materials_cost ?? 0)
-                                + (boqData.cost_summary.total_labour_cost ?? 0)
-                                + (boqData.cost_summary.total_subcontractor_cost ?? 0);
-                              const prelims = sub * ((boqData.cost_summary.preliminaries_pct ?? 8) / 100);
-                              const contingency = sub * ((boqData.cost_summary.contingency_pct ?? 5) / 100);
-                              const profit = (sub + prelims + contingency) * ((boqData.cost_summary.profit_margin_pct ?? 15) / 100);
-                              return [
-                                { label: 'Construction cost subtotal', value: sub },
-                                { label: `Preliminaries (${boqData.cost_summary.preliminaries_pct ?? 8}%)`, value: prelims },
-                                { label: `Contingency (${boqData.cost_summary.contingency_pct ?? 5}%)`, value: contingency },
-                                { label: `Profit & Overhead (${boqData.cost_summary.profit_margin_pct ?? 15}%)`, value: profit },
-                              ].map((row, i) => (
-                                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 20px', borderBottom: '1px solid #1e293b' }}>
-                                  <span style={{ fontSize: 13, color: '#94a3b8' }}>{row.label}</span>
-                                  <span style={{ fontSize: 13, fontFamily: "'DM Mono', monospace", color: '#e2e8f0' }}>{fc(row.value)}</span>
-                                </div>
-                              ));
-                            })()}
-                            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '16px 20px', background: '#1e293b' }}>
-                              <span style={{ fontSize: 15, fontWeight: 800, color: '#f8fafc' }}>TOTAL PROJECT COST</span>
-                              <span style={{ fontSize: 18, fontFamily: "'DM Mono', monospace", fontWeight: 800, color: '#f59e0b' }}>
-                                {fc(boqData.cost_summary.total_project_cost)}
-                              </span>
-                            </div>
-                          </div>
-                          <p style={{ fontSize: 11, color: '#334155', lineHeight: 1.6 }}>
-                            * Rates based on Zimbabwe 2025 market prices. Validate with a registered quantity surveyor before use in tender documents.
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          )}
-        </main>
-      </div>
-    </>
-  );
-}
-
-// --- Editable row -------------------------------------------------------------
-function EditableRow({
-  item, isEditing, onEdit, onSave, onCancel, formatCurrency, confidenceColor,
-}: {
-  item: BOQItem;
-  isEditing: boolean;
-  onEdit: () => void;
-  onSave: (field: keyof BOQItem, val: string | number) => void;
-  onCancel: () => void;
-  formatCurrency: (v: number | null | undefined) => string;
-  confidenceColor: (c: number | null) => string;
-}) {
-  const [qty, setQty] = useState(String(item.quantity ?? ''));
-  const [rate, setRate] = useState(String(item.unit_rate ?? ''));
-
-  useEffect(() => {
-    setQty(String(item.quantity ?? ''));
-    setRate(String(item.unit_rate ?? ''));
-  }, [item]);
-
-  const handleSave = () => {
-    const q = parseFloat(qty);
-    const r = parseFloat(rate);
-    if (!isNaN(q)) onSave('quantity', q);
-    if (!isNaN(r)) onSave('unit_rate', r);
-  };
-
-  return (
-    <tr
-      className="row-hover"
-      style={{ borderBottom: '1px solid #1e293b1a', cursor: 'pointer' }}
-      onClick={() => !isEditing && onEdit()}
-    >
-      <td style={{ padding: '9px 12px', color: '#64748b', fontFamily: "'DM Mono', monospace", fontSize: 12, textAlign: 'right', whiteSpace: 'nowrap' }}>
-        {item.item_number}
-        {item.is_user_edited && <span style={{ color: '#f59e0b', marginLeft: 4, fontSize: 10 }}>(edited)</span>}
-      </td>
-      <td style={{ padding: '9px 12px', color: '#cbd5e1', maxWidth: 360 }}>
-        <span style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' } as any}>
-          {item.description}
-        </span>
-      </td>
-      <td style={{ padding: '9px 12px', color: '#94a3b8', textAlign: 'right', fontFamily: "'DM Mono', monospace" }}>
-        {item.unit ?? '--'}
-      </td>
-      <td style={{ padding: '9px 12px', textAlign: 'right' }}>
-        {isEditing ? (
-          <input className="edit-input" style={{ width: 80 }} value={qty}
-            onChange={e => setQty(e.target.value)} onClick={e => e.stopPropagation()} />
-        ) : (
-          <span style={{ fontFamily: "'DM Mono', monospace", color: '#e2e8f0' }}>
-            {item.quantity?.toLocaleString() ?? '--'}
-          </span>
-        )}
-      </td>
-      <td style={{ padding: '9px 12px', textAlign: 'right' }}>
-        {isEditing ? (
-          <input className="edit-input" style={{ width: 90 }} value={rate}
-            onChange={e => setRate(e.target.value)} onClick={e => e.stopPropagation()} />
-        ) : (
-          <span style={{ fontFamily: "'DM Mono', monospace", color: '#94a3b8' }}>
-            {formatCurrency(item.unit_rate)}
-          </span>
-        )}
-      </td>
-      <td style={{ padding: '9px 12px', textAlign: 'right', fontFamily: "'DM Mono', monospace", fontSize: 12, color: '#3b82f6' }}>
-        {formatCurrency(item.materials_cost)}
-      </td>
-      <td style={{ padding: '9px 12px', textAlign: 'right', fontFamily: "'DM Mono', monospace", fontSize: 12, color: '#8b5cf6' }}>
-        {formatCurrency(item.labour_cost)}
-      </td>
-      <td style={{ padding: '9px 12px', textAlign: 'right', fontFamily: "'DM Mono', monospace", fontWeight: 700, color: item.amount ? '#f8fafc' : '#334155' }}>
-        {formatCurrency(item.amount)}
-      </td>
-      <td style={{ padding: '9px 12px', textAlign: 'right' }}>
-        {isEditing ? (
-          <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }} onClick={e => e.stopPropagation()}>
-            <button className="btn btn-primary" onClick={handleSave} style={{ padding: '3px 10px', fontSize: 12 }}>OK</button>
-            <button className="btn btn-ghost" onClick={onCancel} style={{ padding: '3px 8px', fontSize: 12 }}>X</button>
-          </div>
-        ) : (
-          <span style={{ color: confidenceColor(item.confidence), fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 700 }}>
-            {item.confidence ? `${Math.round(item.confidence * 100)}%` : '--'}
-          </span>
-        )}
-      </td>
-    </tr>
-  );
-}
-
+                                <td style={{ padding: '9px 12px', textAlign: 'right', fontFamily: "'DM Mono', monospace", color: '#e2e8f0' }}>{mat.quantity_required?.toLocaleString() ?? '—'}</td>
+                                <td style={{ padding: '9px 12px', textAlign: 'right', fontFamily: "'DM Mono', monospace", color: '#94a3b8' }}>{fc(mat.unit_rate)}</td>
+                                <td style={{ padding: '9px 12px', textAlign: 'right', fontFamily: "'DM Mono', monospace", fontWeight: 700, color: '#f8fafc' }}>{fc(mat.total_cost)}</td>
+                                <td style={{ padding: '9px 12px', color:

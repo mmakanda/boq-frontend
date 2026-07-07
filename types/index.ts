@@ -1,5 +1,3 @@
-// types/index.ts — TypeScript types matching backend Pydantic schemas
-
 export interface User {
   id: string;
   email: string;
