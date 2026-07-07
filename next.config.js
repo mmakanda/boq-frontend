@@ -24,20 +24,14 @@ const nextConfig = {
           {
             key: 'Content-Security-Policy',
             value: [
-              "default-src 'self'",
-
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://clerk.dev https://*.clerk.accounts.dev https://challenges.cloudflare.com",
-
-              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://clerk.dev https://*.clerk.accounts.dev",
-
-              "font-src 'self' https://fonts.gstatic.com",
-
-              "img-src 'self' data: blob: https://clerk.dev https://*.clerk.accounts.dev https://img.clerk.com",
-
-              "connect-src 'self' https://amaryllis-boq-production.up.railway.app https://clerk.dev https://*.clerk.accounts.dev wss://*.clerk.accounts.dev",
-
-              "frame-src 'self' https://clerk.dev https://*.clerk.accounts.dev https://challenges.cloudflare.com",
-
+              "default-src 'self' https://*.boq.amaryllissuccess.co.zw https://*.clerk.com https://*.clerk.accounts.dev",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.boq.amaryllissuccess.co.zw https://clerk.com https://*.clerk.com https://*.clerk.accounts.dev https://challenges.cloudflare.com",
+              "script-src-elem 'self' 'unsafe-inline' https://*.boq.amaryllissuccess.co.zw https://clerk.com https://*.clerk.com https://*.clerk.accounts.dev https://challenges.cloudflare.com",
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.clerk.com",
+              "font-src 'self' https://fonts.gstatic.com https://*.clerk.com",
+              "img-src 'self' data: blob: https://*.clerk.com https://img.clerk.com https://*.boq.amaryllissuccess.co.zw",
+              "connect-src 'self' https://amaryllis-boq-production.up.railway.app https://*.boq.amaryllissuccess.co.zw https://clerk.com https://*.clerk.com https://*.clerk.accounts.dev wss://*.clerk.accounts.dev wss://*.boq.amaryllissuccess.co.zw",
+              "frame-src 'self' https://*.boq.amaryllissuccess.co.zw https://clerk.com https://*.clerk.com https://*.clerk.accounts.dev https://challenges.cloudflare.com",
               "worker-src 'self' blob:",
             ].join('; '),
           },
