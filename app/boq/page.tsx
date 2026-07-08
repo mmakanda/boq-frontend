@@ -365,7 +365,7 @@ export default function BOQPage() {
           {/* User section with explicit sign out */}
           <div style={{ padding: '12px 16px', borderTop: '1px solid #1e293b' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-              <UserButton afterSignOutUrl="/sign-in" />
+              <UserButton />
               <div style={{ overflow: 'hidden', flex: 1 }}>
                 <div style={{ fontSize: 12, color: '#e2e8f0', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {user?.fullName || user?.primaryEmailAddress?.emailAddress}
@@ -661,3 +661,146 @@ export default function BOQPage() {
                                 <td style={{ padding: '9px 12px', textAlign: 'right', fontFamily: "'DM Mono', monospace", color: '#94a3b8' }}>{fc(mat.unit_rate)}</td>
                                 <td style={{ padding: '9px 12px', textAlign: 'right', fontFamily: "'DM Mono', monospace", fontWeight: 700, color: '#f8fafc' }}>{fc(mat.total_cost)}</td>
                                 <td style={{ padding: '9px 12px', color:
+ '#64748b', fontSize: 11, maxWidth: 220 }}>{mat.supplier_note || '—'}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                          <tfoot>
+                            <tr style={{ background: '#0a0d14', borderTop: '2px solid #1e293b' }}>
+                              <td colSpan={5} style={{ padding: '12px 16px', textAlign: 'right', color: '#64748b', fontSize: 12, fontWeight: 700, textTransform: 'uppercase' }}>Total Materials</td>
+                              <td style={{ padding: '12px 16px', textAlign: 'right', fontFamily: "'DM Mono', monospace", fontWeight: 800, color: '#f59e0b', fontSize: 15 }}>
+                                {fc(boqData.material_schedule.reduce((s, m) => s + (m.total_cost ?? 0), 0))}
+                              </td>
+                              <td />
+                            </tr>
+                          </tfoot>
+                        </table>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Cost Summary Tab */}
+                  {activeTab === 'cost' && (
+                    <div style={{ flex: 1, overflow: 'auto', padding: 32 }}>
+                      {!boqData.cost_summary ? (
+                        <div style={{ textAlign: 'center', padding: '60px 0', color: '#475569' }}>
+                          <p>Cost summary not available.</p>
+                        </div>
+                      ) : (
+                        <div style={{ maxWidth: 560 }}>
+                          <h2 style={{ fontSize: 18, fontWeight: 800, color: '#f8fafc', marginBottom: 24 }}>Cost Summary</h2>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 28 }}>
+                            {[
+                              { label: 'Materials', value: boqData.cost_summary.total_materials_cost, color: '#3b82f6' },
+                              { label: 'Labour', value: boqData.cost_summary.total_labour_cost, color: '#8b5cf6' },
+                              { label: 'Subcontractors', value: boqData.cost_summary.total_subcontractor_cost, color: '#06b6d4' },
+                            ].map(item => (
+                              <div key={item.label} className="card" style={{ padding: '16px 20px' }}>
+                                <div style={{ fontSize: 11, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>{item.label}</div>
+                                <div style={{ fontSize: 20, fontWeight: 800, color: item.color, fontFamily: "'DM Mono', monospace" }}>{fc(item.value)}</div>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="card" style={{ overflow: 'hidden', marginBottom: 20 }}>
+                            {(() => {
+                              const sub = (boqData.cost_summary.total_materials_cost ?? 0) + (boqData.cost_summary.total_labour_cost ?? 0) + (boqData.cost_summary.total_subcontractor_cost ?? 0);
+                              const prelims = sub * ((boqData.cost_summary.preliminaries_pct ?? 8) / 100);
+                              const contingency = sub * ((boqData.cost_summary.contingency_pct ?? 5) / 100);
+                              const profit = (sub + prelims + contingency) * ((boqData.cost_summary.profit_margin_pct ?? 15) / 100);
+                              return [
+                                { label: 'Construction cost subtotal', value: sub },
+                                { label: `Preliminaries (${boqData.cost_summary.preliminaries_pct ?? 8}%)`, value: prelims },
+                                { label: `Contingency (${boqData.cost_summary.contingency_pct ?? 5}%)`, value: contingency },
+                                { label: `Profit & Overhead (${boqData.cost_summary.profit_margin_pct ?? 15}%)`, value: profit },
+                              ].map((row, i) => (
+                                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 20px', borderBottom: '1px solid #1e293b' }}>
+                                  <span style={{ fontSize: 13, color: '#94a3b8' }}>{row.label}</span>
+                                  <span style={{ fontSize: 13, fontFamily: "'DM Mono', monospace", color: '#e2e8f0' }}>{fc(row.value)}</span>
+                                </div>
+                              ));
+                            })()}
+                            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '16px 20px', background: '#1e293b' }}>
+                              <span style={{ fontSize: 15, fontWeight: 800, color: '#f8fafc' }}>TOTAL PROJECT COST</span>
+                              <span style={{ fontSize: 18, fontFamily: "'DM Mono', monospace", fontWeight: 800, color: '#f59e0b' }}>{fc(boqData.cost_summary.total_project_cost)}</span>
+                            </div>
+                          </div>
+                          <p style={{ fontSize: 11, color: '#334155', lineHeight: 1.6 }}>
+                            * Rates based on Zimbabwe 2025 market prices. Validate with a registered quantity surveyor before use in tender documents.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+        </main>
+      </div>
+    </>
+  );
+}
+
+function EditableRow({ item, isEditing, onEdit, onSave, onCancel, formatCurrency, confidenceColor }: {
+  item: BOQItem;
+  isEditing: boolean;
+  onEdit: () => void;
+  onSave: (field: keyof BOQItem, val: string | number) => void;
+  onCancel: () => void;
+  formatCurrency: (v: number | null | undefined) => string;
+  confidenceColor: (c: number | null) => string;
+}) {
+  const [qty, setQty] = useState(String(item.quantity ?? ''));
+  const [rate, setRate] = useState(String(item.unit_rate ?? ''));
+
+  useEffect(() => {
+    setQty(String(item.quantity ?? ''));
+    setRate(String(item.unit_rate ?? ''));
+  }, [item]);
+
+  const handleSave = () => {
+    const q = parseFloat(qty);
+    const r = parseFloat(rate);
+    if (!isNaN(q)) onSave('quantity', q);
+    if (!isNaN(r)) onSave('unit_rate', r);
+  };
+
+  return (
+    <tr className="row-hover" style={{ borderBottom: '1px solid #1e293b1a', cursor: 'pointer' }}
+      onClick={() => !isEditing && onEdit()}>
+      <td style={{ padding: '9px 12px', color: '#64748b', fontFamily: "'DM Mono', monospace", fontSize: 12, textAlign: 'right', whiteSpace: 'nowrap' }}>
+        {item.item_number}
+        {item.is_user_edited && <span style={{ color: '#f59e0b', marginLeft: 4, fontSize: 10 }}>✎</span>}
+      </td>
+      <td style={{ padding: '9px 12px', color: '#cbd5e1', maxWidth: 360 }}>
+        <span style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' } as any}>{item.description}</span>
+      </td>
+      <td style={{ padding: '9px 12px', color: '#94a3b8', textAlign: 'right', fontFamily: "'DM Mono', monospace" }}>{item.unit ?? '—'}</td>
+      <td style={{ padding: '9px 12px', textAlign: 'right' }}>
+        {isEditing
+          ? <input className="edit-input" style={{ width: 80 }} value={qty} onChange={e => setQty(e.target.value)} onClick={e => e.stopPropagation()} />
+          : <span style={{ fontFamily: "'DM Mono', monospace", color: '#e2e8f0' }}>{item.quantity?.toLocaleString() ?? '—'}</span>}
+      </td>
+      <td style={{ padding: '9px 12px', textAlign: 'right' }}>
+        {isEditing
+          ? <input className="edit-input" style={{ width: 90 }} value={rate} onChange={e => setRate(e.target.value)} onClick={e => e.stopPropagation()} />
+          : <span style={{ fontFamily: "'DM Mono', monospace", color: '#94a3b8' }}>{formatCurrency(item.unit_rate)}</span>}
+      </td>
+      <td style={{ padding: '9px 12px', textAlign: 'right', fontFamily: "'DM Mono', monospace", fontSize: 12, color: '#3b82f6' }}>{formatCurrency(item.materials_cost)}</td>
+      <td style={{ padding: '9px 12px', textAlign: 'right', fontFamily: "'DM Mono', monospace", fontSize: 12, color: '#8b5cf6' }}>{formatCurrency(item.labour_cost)}</td>
+      <td style={{ padding: '9px 12px', textAlign: 'right', fontFamily: "'DM Mono', monospace", fontWeight: 700, color: item.amount ? '#f8fafc' : '#334155' }}>{formatCurrency(item.amount)}</td>
+      <td style={{ padding: '9px 12px', textAlign: 'right' }}>
+        {isEditing ? (
+          <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }} onClick={e => e.stopPropagation()}>
+            <button className="btn btn-primary" onClick={handleSave} style={{ padding: '3px 10px', fontSize: 12 }}>✓</button>
+            <button className="btn btn-ghost" onClick={onCancel} style={{ padding: '3px 8px', fontSize: 12 }}>✕</button>
+          </div>
+        ) : (
+          <span style={{ color: confidenceColor(item.confidence), fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 700 }}>
+            {item.confidence ? `${Math.round(item.confidence * 100)}%` : '—'}
+          </span>
+        )}
+      </td>
+    </tr>
+  );
+}
